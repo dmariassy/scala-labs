@@ -40,6 +40,58 @@ import scala.language.implicitConversions
  *   of type [[org.scalalabs.basic.lab01.CurrencyConverter]]
  * - Use the implicit CurrencyConverter to do the conversion.
  */
-class Euro {
+
+abstract class Currency(intPart: Int, decimalPart: Int = 0, val symbol: String) {
+
+  def inCents: Int = intPart * 100 + decimalPart
+
+}
+
+object Euro {
+
+  def fromCents(cents: Int): Euro = {
+
+    val euro = cents / 100
+    val remainderCents = cents - euro * 100
+
+    new Euro(euro, remainderCents)
+
+  }
+
+  implicit class IntTimesEuro(x: Int) {
+    def *(y: Euro): Euro = {
+      y * x
+    }
+  }
+
+}
+
+case class Euro(euro: Int, cents: Int = 0, override val symbol: String = "EUR") extends Currency(euro, cents, symbol) with Ordered[Euro] {
+
+  def +(other: Euro): Euro = {
+    val centVal = other.inCents + this.inCents
+    Euro.fromCents(centVal)
+  }
+
+  def *(multiplier: Int): Euro = {
+    val centVal = multiplier * this.inCents
+    Euro.fromCents(centVal)
+  }
+
+  def compare(that: Euro): Int = {
+    this.inCents - that.inCents
+  }
+
+  override lazy val toString = s"$symbol: $euro,${if (cents > 0) f"$cents%02d" else "--"}"
+
+}
+
+object Dollar extends DefaultCurrencyConverter {
+  implicit def DollartoEuro(x: Dollar): Euro = {
+    Euro.fromCents(toEuroCents(x.inCents))
+  }
+}
+
+case class Dollar(dollar: Int, cents: Int = 0, override val symbol: String = "USD") extends Currency(dollar, cents, symbol) {
 
 }
